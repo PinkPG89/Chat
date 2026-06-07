@@ -1,0 +1,93 @@
+import type { AgentStreamEvent } from '../types/agent-events';
+
+export const mockAgentRunId = 'run_fastapi_8f13';
+
+export const mockAgentEvents: AgentStreamEvent[] = [
+  {
+    id: 'evt_001',
+    run_id: mockAgentRunId,
+    type: 'planning',
+    status: 'complete',
+    timestamp: '2026-06-07T00:42:13.000Z',
+    title: 'Prepare agent plan',
+    summary: 'Pydantic AI validated the request envelope and prepared the graph execution plan.',
+    graph_node: 'planner',
+    pydantic_model: 'ChatRequest',
+    metadata: { framework: 'pydantic_ai', schema_version: '2026-06-07', visible_summary: true },
+  },
+  {
+    id: 'evt_002',
+    run_id: mockAgentRunId,
+    type: 'graph_node_start',
+    status: 'complete',
+    timestamp: '2026-06-07T00:42:19.000Z',
+    title: 'Start retrieval node',
+    summary: 'The graph runner entered a retrieval node and prepared a tool request.',
+    graph_node: 'agent_graph.retrieve_context',
+    pydantic_model: 'GraphNodeState',
+    metadata: { node_id: 'retrieve_context', attempt: 1, dependencies_ready: true },
+  },
+  {
+    id: 'evt_003',
+    run_id: mockAgentRunId,
+    type: 'tool_call',
+    status: 'complete',
+    timestamp: '2026-06-07T00:42:26.000Z',
+    title: 'Call search_docs',
+    summary: 'The agent requested relevant implementation notes through a typed tool call.',
+    graph_node: 'agent_graph.retrieve_context',
+    pydantic_model: 'ToolCallEvent',
+    tool: {
+      name: 'search_docs',
+      call_id: 'call_42c9',
+      args: { query: 'pydantic ai graph fastapi agent trace ui', limit: 4 },
+      elapsed_ms: 612,
+    },
+    metadata: { transport: 'fastapi_sse', tool_call_id: 'call_42c9' },
+  },
+  {
+    id: 'evt_004',
+    run_id: mockAgentRunId,
+    type: 'tool_result',
+    status: 'complete',
+    timestamp: '2026-06-07T00:42:33.000Z',
+    title: 'Receive tool result',
+    summary: 'FastAPI streamed a validated tool result back to the UI with safe display fields.',
+    graph_node: 'agent_graph.retrieve_context',
+    pydantic_model: 'ToolResultEvent',
+    tool: {
+      name: 'search_docs',
+      call_id: 'call_42c9',
+      result: { matches: 4, top_source: 'backend/agent/events.py', cached: false },
+      elapsed_ms: 612,
+    },
+    metadata: { result_count: 4, payload_validated: true },
+  },
+  {
+    id: 'evt_005',
+    run_id: mockAgentRunId,
+    type: 'graph_node_end',
+    status: 'complete',
+    timestamp: '2026-06-07T00:42:41.000Z',
+    title: 'Complete retrieval node',
+    summary: 'The graph node finished and emitted a compact state transition for the client.',
+    graph_node: 'agent_graph.retrieve_context',
+    pydantic_model: 'GraphNodeState',
+    metadata: { node_id: 'retrieve_context', duration_ms: 22084, next_node: 'compose_response' },
+  },
+  {
+    id: 'evt_006',
+    run_id: mockAgentRunId,
+    type: 'finalizing',
+    status: 'running',
+    timestamp: '2026-06-07T00:42:48.000Z',
+    title: 'Stream final answer',
+    summary: 'The response node is sending answer deltas while the UI keeps the latest event in view.',
+    graph_node: 'agent_graph.compose_response',
+    pydantic_model: 'AnswerDeltaEvent',
+    metadata: { stream_state: 'active', token_batch: 7, partial: true },
+  },
+];
+
+export const mockAnswerText =
+  'FastAPI can stream these typed Pydantic AI graph events directly to the console. The UI renders public execution summaries, tool payloads, graph node badges, and answer deltas without exposing hidden reasoning.';

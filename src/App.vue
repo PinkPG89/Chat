@@ -17,138 +17,26 @@ import {
   Sparkles,
   Terminal,
   User,
-} from 'lucide-vue-next';
-
-type TraceKind =
-  | 'planning'
-  | 'graph_node_start'
-  | 'tool_call'
-  | 'tool_result'
-  | 'graph_node_end'
-  | 'finalizing';
-
-type TraceStatus = 'complete' | 'running' | 'queued';
-
-interface TraceEvent {
-  id: number;
-  kind: TraceKind;
-  title: string;
-  summary: string;
-  timestamp: string;
-  status: TraceStatus;
-  node?: string;
-  tool?: {
-    name: string;
-    input: string;
-    output?: string;
-  };
-  metadata: Record<string, unknown>;
-}
+} from '@lucide/vue';
+import { mockAgentEvents, mockAgentRunId, mockAnswerText } from './data/mock-agent-run';
+import { normalizeAgentEvent, type TraceEventView } from './types/agent-events';
 
 const traceExpanded = ref(true);
-const detailsOpen = ref<Record<number, boolean>>({ 2: true });
+const detailsOpen = ref<Record<string, boolean>>({ evt_002: true });
 const liveCursor = ref<HTMLElement | null>(null);
 
-const traceEvents = ref<TraceEvent[]>([
-  {
-    id: 1,
-    kind: 'planning',
-    title: 'Plan workspace scan',
-    summary: 'Defined a short implementation path and selected the files needed for a front-end only prototype.',
-    timestamp: '09:42:13',
-    status: 'complete',
-    node: 'planner',
-    metadata: { stage: 'planning', visible_summary: true, risk: 'low' },
-  },
-  {
-    id: 2,
-    kind: 'graph_node_start',
-    title: 'Start design node',
-    summary: 'Entered the UI composition node to shape layout, hierarchy, and interaction states.',
-    timestamp: '09:42:19',
-    status: 'complete',
-    node: 'ui_graph.compose',
-    metadata: { node_id: 'ui_graph.compose', run_id: 'run_8f13', attempt: 1 },
-  },
-  {
-    id: 3,
-    kind: 'tool_call',
-    title: 'Call search_docs',
-    summary: 'Queried local product notes for tone, component naming, and safe execution trace language.',
-    timestamp: '09:42:26',
-    status: 'complete',
-    node: 'retrieval',
-    tool: {
-      name: 'search_docs',
-      input: '{ "query": "agent execution trace UI labels" }',
-      output: '4 matching notes returned',
-    },
-    metadata: { tool_call_id: 'call_42c9', latency_ms: 612, source_count: 4 },
-  },
-  {
-    id: 4,
-    kind: 'tool_result',
-    title: 'Review retrieved context',
-    summary: 'Converted the retrieved notes into safe progress summaries without exposing hidden reasoning text.',
-    timestamp: '09:42:33',
-    status: 'complete',
-    node: 'retrieval',
-    metadata: { result_count: 4, applied_terms: ['Agent trace', 'Execution trace', 'Working steps'] },
-  },
-  {
-    id: 5,
-    kind: 'graph_node_end',
-    title: 'Finish design node',
-    summary: 'Locked the timeline structure, message density, visual treatment, and details disclosure pattern.',
-    timestamp: '09:42:41',
-    status: 'complete',
-    node: 'ui_graph.compose',
-    metadata: { node_id: 'ui_graph.compose', duration_ms: 22084, status: 'completed' },
-  },
-  {
-    id: 6,
-    kind: 'finalizing',
-    title: 'Streaming final response',
-    summary: 'Generating the final answer content and keeping the newest execution event in view.',
-    timestamp: '09:42:48',
-    status: 'running',
-    node: 'response.finalize',
-    metadata: { stream_state: 'active', token_batch: 7, partial: true },
-  },
-]);
-
-const answerTokens = [
-  'Built',
-  'a',
-  'developer-grade',
-  'agent',
-  'console',
-  'that',
-  'shows',
-  'safe',
-  'execution',
-  'progress,',
-  'tool',
-  'activity,',
-  'graph',
-  'nodes,',
-  'and',
-  'a',
-  'streaming',
-  'answer',
-  'without',
-  'revealing',
-  'private',
-  'reasoning.',
-];
+const traceEvents = ref<TraceEventView[]>(
+  mockAgentEvents.map(normalizeAgentEvent).filter((event): event is TraceEventView => event !== null),
+);
+const answerTokens = mockAnswerText.split(' ');
 
 const completedCount = computed(() => traceEvents.value.filter((event) => event.status === 'complete').length);
 
-function toggleDetails(id: number) {
+function toggleDetails(id: string) {
   detailsOpen.value[id] = !detailsOpen.value[id];
 }
 
-function eventIcon(kind: TraceKind) {
+function eventIcon(kind: TraceEventView['kind']) {
   const icons = {
     planning: Layers3,
     graph_node_start: Play,
@@ -161,7 +49,7 @@ function eventIcon(kind: TraceKind) {
   return icons[kind];
 }
 
-function jsonMetadata(event: TraceEvent) {
+function jsonMetadata(event: TraceEventView) {
   return JSON.stringify(event.metadata, null, 2);
 }
 
@@ -193,7 +81,7 @@ onMounted(() => {
         </div>
         <div class="hidden items-center gap-2 rounded-full border border-console-line bg-console-panel/80 px-3 py-1.5 text-xs text-console-muted sm:flex">
           <span class="h-2 w-2 rounded-full bg-console-green shadow-[0_0_14px_rgba(134,239,172,0.8)]" />
-          Live run
+          FastAPI stream
         </div>
       </header>
 
@@ -218,14 +106,25 @@ onMounted(() => {
                 </div>
                 <div>
                   <div class="flex flex-wrap items-center gap-2">
-                    <h1 class="text-base font-semibold text-white">Repository implementation run</h1>
+                    <h1 class="text-base font-semibold text-white">Pydantic AI graph run</h1>
                     <span class="rounded-full border border-console-cyan/30 bg-console-cyan/10 px-2 py-0.5 text-[11px] font-medium text-console-cyan">
                       {{ completedCount }}/{{ traceEvents.length }} steps
                     </span>
                   </div>
                   <p class="mt-1 text-sm leading-6 text-console-muted">
-                    Building the interface from mock execution events and summarizing only observable progress.
+                    Run {{ mockAgentRunId }} is rendered from typed FastAPI events with public execution summaries.
                   </p>
+                  <div class="mt-3 flex flex-wrap gap-2">
+                    <span class="rounded-md border border-teal-300/20 bg-teal-300/10 px-2 py-1 text-[11px] font-medium text-teal-100">
+                      Pydantic AI
+                    </span>
+                    <span class="rounded-md border border-blue-300/20 bg-blue-300/10 px-2 py-1 text-[11px] font-medium text-blue-100">
+                      Graph nodes
+                    </span>
+                    <span class="rounded-md border border-amber-200/20 bg-amber-200/10 px-2 py-1 text-[11px] font-medium text-amber-100">
+                      FastAPI SSE
+                    </span>
+                  </div>
                 </div>
               </div>
               <div class="flex items-center gap-2">
@@ -248,7 +147,7 @@ onMounted(() => {
                 <PanelRightOpen class="h-4 w-4 text-console-cyan" />
                 <span>
                   <span class="block text-sm font-semibold text-white">Agent trace</span>
-                  <span class="block text-xs text-console-muted">Working steps, tool calls, and graph events</span>
+                  <span class="block text-xs text-console-muted">Pydantic events, tool calls, and graph nodes</span>
                 </span>
               </span>
               <ChevronDown v-if="traceExpanded" class="h-4 w-4 text-console-muted" />
@@ -281,11 +180,17 @@ onMounted(() => {
                       <div class="flex flex-wrap items-center gap-2">
                         <h2 class="text-sm font-semibold text-white">{{ event.title }}</h2>
                         <span
-                          v-if="event.node"
+                          v-if="event.graphNode"
                           class="inline-flex items-center gap-1 rounded-md border border-blue-300/25 bg-blue-300/10 px-2 py-0.5 text-[11px] font-medium text-blue-100"
                         >
                           <Code2 class="h-3 w-3" />
-                          {{ event.node }}
+                          {{ event.graphNode }}
+                        </span>
+                        <span
+                          v-if="event.pydanticModel"
+                          class="rounded-md border border-teal-300/20 bg-teal-300/10 px-2 py-0.5 text-[11px] font-medium text-teal-100"
+                        >
+                          {{ event.pydanticModel }}
                         </span>
                       </div>
                       <p class="mt-1 text-sm leading-6 text-console-muted">{{ event.summary }}</p>
@@ -302,7 +207,9 @@ onMounted(() => {
                         <Search class="h-3.5 w-3.5" />
                         tool_call · {{ event.tool.name }}
                       </span>
-                      <span class="rounded-full bg-console-green/10 px-2 py-0.5 text-[11px] text-console-green">completed</span>
+                      <span class="rounded-full bg-console-green/10 px-2 py-0.5 text-[11px] text-console-green">
+                        {{ event.tool.elapsedMs ? `${event.tool.elapsedMs}ms` : 'completed' }}
+                      </span>
                     </div>
                     <div class="grid gap-2 text-xs text-slate-300 sm:grid-cols-2">
                       <pre class="overflow-x-auto rounded-md bg-black/24 p-3">{{ event.tool.input }}</pre>
