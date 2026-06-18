@@ -32,7 +32,7 @@ interface ChatTurn {
   error?: string;
 }
 
-const defaultPrompt = '배포 이후 결제 API latency가 급증하고 500 오류가 늘었어. 원인 찾아줘.';
+const defaultPrompt = 'Immich가 모바일에서 접속이 안 돼. Tailscale은 되는 것 같아. 원인 후보를 확인해줘.';
 
 const input = ref(defaultPrompt);
 const contextInput = ref('');
@@ -238,7 +238,7 @@ onBeforeUnmount(() => {
                 </div>
                 <p class="text-sm font-semibold text-white">장애 상황을 입력하면 Supervisor가 도메인 에이전트를 호출합니다.</p>
                 <p class="mt-2 text-sm leading-6 text-console-muted">
-                  CD, Log, Metric, APM 같은 서브 에이전트 호출 상태가 오른쪽 trace에 실시간으로 쌓입니다.
+                  Docker, Network, Logs, Metrics 같은 홈랩 서브 에이전트 호출 상태가 오른쪽 trace에 실시간으로 쌓입니다.
                 </p>
               </div>
             </div>
