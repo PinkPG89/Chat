@@ -1,4 +1,4 @@
-import type { AgentStreamEvent } from '../types/agent-events';
+import type { AgentStreamEvent } from '../../types/agent-events';
 
 export const mockAgentRunId = 'run_fastapi_8f13';
 

@@ -27,7 +27,8 @@ Chat/
     App.vue                   # chat layout, trace panel, SSE state handling
     lib/fastapi-stream.ts     # POST /api/runs and EventSource helper
     types/agent-events.ts     # AgentStreamEvent and trace view normalization
-    data/mock-agent-run.ts    # legacy mock data, no longer used by App.vue
+    dev/fixtures/
+      mock-agent-run.ts       # legacy mock data, no longer used by App.vue
 ```
 
 ## Run
@@ -113,6 +114,6 @@ run_complete
 
 ## Notes
 
-- `mock-agent-run.ts` is legacy sample data from the first UI prototype.
+- `src/dev/fixtures/mock-agent-run.ts` is legacy sample data from the first UI prototype.
 - Current `App.vue` starts empty and only renders data from real Agent API events.
 - Mobile access should use the Tailscale URL when normal LAN IP is unreachable.
